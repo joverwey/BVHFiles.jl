@@ -1,0 +1,13 @@
+name = "BVH"
+uuid = "25714dd2-c69e-4994-8c66-7895118b2050"
+authors = ["Carl Bittendorf"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

@@ -2,6 +2,13 @@ export global_positions!, global_position
 
 
 
+"""
+    global_positions!(g::BVHGraph)
+
+Calculate the global positions for every vertex and frame in `g` and store them.
+
+See also: [`global_position`](@ref)
+"""
 function global_positions!(g::BVHGraph)
     for v in vertices(g)
         positions!(g, v, zeros(Float64, nframes(g), 3))
@@ -50,6 +57,15 @@ end
 global_positions!() = g -> global_positions!(g)
 
 
+"""
+    global_position(g::BVHGraph, v::Integer, f::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
+
+Return the global position of vertex `v` for frame `f`.
+
+This function does not store the result in `g`. `N` should not be changed.
+
+See also: [`global_positions!`](@ref)
+"""
 function global_position(g::BVHGraph, v::Integer, f::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
     p = zeros(Float64, 3)
     

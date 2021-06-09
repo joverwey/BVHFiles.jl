@@ -50,6 +50,16 @@ add_joint!(v₋₁::AbstractString, name::AbstractString, off::Vector{Float64}) 
 add_joint!(g::BVHGraph, v₋₁::AbstractString, name::AbstractString, off::Vector{Float64}, nb::Vector = outneighbors(g, find(g, v₋₁))) = add_joint!(g, find(g, v₋₁), name, off, nb)
 
 
+"""
+    change_sequence!(g::BVHGraph, v::Integer, sym::Symbol)
+
+Change the rotation order of vertex `v` to `sym`. The euler angles are adjusted accordingly.
+
+Valid Symbols are `:XYZ`, `:XYX`, `:XZX`, `:XZY`, `:YXZ`, `:YZX`, `:YXY`, `:YZY`, 
+`:ZXY`, `:ZYX`, `:ZXZ`, `:ZYZ`.
+
+See also: [`change_sequences!`](@ref)
+"""
 function change_sequence!(g::BVHGraph, v::Integer, sym::Symbol)
     r = constructor(sym)
     
@@ -65,6 +75,16 @@ end
 change_sequence!(v::Integer, sym::Symbol) = g -> change_sequence!(g, v, sym)
 
 
+"""
+    change_sequences!(g::BVHGraph, sym::Symbol)
+
+Change the rotation order of all vertices to `sym`. The euler angles are adjusted accordingly.
+
+Valid Symbols are `:XYZ`, `:XYX`, `:XZX`, `:XZY`, `:YXZ`, `:YZX`, `:YXY`, `:YZY`, 
+`:ZXY`, `:ZYX`, `:ZXZ`, `:ZYZ`.
+
+See also: [`change_sequence!`](@ref)
+"""
 function change_sequences!(g::BVHGraph, sym::Symbol)
     for v in vertices(g)
         outneighbors(g, v) != [] && change_sequence!(g, v, sym)

@@ -2,6 +2,19 @@ export load, save
 
 
 
+"""
+    load(filename::AbstractString)
+
+Read a BVH file with name `filename` and return a `BVHGraph`.
+
+# Examples
+```julia
+julia> g = load("Test.bvh")
+BVHGraph
+Name: Test.bvh
+[...]
+```
+"""
 function load(filename::AbstractString)
     list = read(filename, String) |> split((' ', '\t', '\n', '\r'))
     g = BVHGraph(1, name = filename, 
@@ -65,6 +78,11 @@ function load(filename::AbstractString)
 end
 
 
+"""
+    save(g::BVHGraph, filename::AbstractString)
+
+Save a BVHGraph `g` to `filename` as a BVH file.
+"""
 function save(g::BVHGraph, filename::AbstractString)
 
     function add_hierarchy(io::IO, v₋₁::Integer, v::Integer, tabs::Integer)

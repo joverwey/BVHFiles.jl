@@ -6,3 +6,6 @@
 [![Coverage](https://coveralls.io/repos/github/CarlBittendorf/BVH.jl/badge.svg?branch=master)](https://coveralls.io/github/CarlBittendorf/BVH.jl?branch=master)
 
 
+
+https://user-images.githubusercontent.com/85636219/121430877-f6deff00-c978-11eb-944a-ec36bfbfc072.mp4
+

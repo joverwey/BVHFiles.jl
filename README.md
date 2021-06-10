@@ -10,6 +10,16 @@ data in a hierarchical structure.
 
 BVH.jl uses [graphs](https://github.com/JuliaGraphs/LightGraphs.jl) to represent and manipulate the data.
 
+## Examples
+
+![Original small](https://user-images.githubusercontent.com/85636219/121529929-2d5e5d80-c9fd-11eb-9b88-8622ed137318.png)
+![Icon small](https://user-images.githubusercontent.com/85636219/121533093-3ac91700-ca00-11eb-9d48-8eff6ab156bc.png)
+![Transformed small](https://user-images.githubusercontent.com/85636219/121529954-351e0200-c9fd-11eb-8820-7458841fd94f.png)
+![Icon small](https://user-images.githubusercontent.com/85636219/121533093-3ac91700-ca00-11eb-9d48-8eff6ab156bc.png)
+![Result small](https://user-images.githubusercontent.com/85636219/121530043-4a932c00-c9fd-11eb-8dae-dd53e47e847d.png)
+
+
+
 https://user-images.githubusercontent.com/85636219/121430877-f6deff00-c978-11eb-944a-ec36bfbfc072.mp4
 
 

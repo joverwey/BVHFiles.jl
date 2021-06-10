@@ -3,6 +3,13 @@ remove_joint!, remove_joints!, rename!, replace_offset!, replace_offsets!, scale
 
 
 
+"""
+    add_frames!(g::BVHGraph, frames::Integer)
+
+Extend the animation by a number of `frames`.
+
+The positions and rotations for the additional frames are set to zero.
+"""
 function add_frames!(g::BVHGraph, frames::Integer)
     positions!(g, [positions(g); zeros(Float64, frames, 3)])
 
@@ -19,6 +26,15 @@ end
 add_frames!(frames::Integer) = g -> add_frames!(g, frames)
 
 
+"""
+    add_joint!(g::BVHGraph, v₋₁::Integer, v₊₁::Integer, name::AbstractString; fraction::Float64 = 0.5)
+
+Add a vertex on the straight line between `v₋₁` and `v₊₁` named `name`. 
+`fraction` refers to the fraction of the old offset that will be assigned to the new vertex.
+
+"JOINT" is automatically added in front of `name`. 
+`v₋₁` and `v₊₁` can also be identified by their name.
+"""
 function add_joint!(g::BVHGraph, v₋₁::Integer, v₊₁::Integer, name::AbstractString; fraction::Float64 = 0.5)
     v = add_vertex!(g, name = "JOINT $(name)", sequence = sequence(g, v₋₁), rotations = zeros(Float64, nframes(g), 3))
     off = offset(g, v₋₁, v₊₁)
@@ -29,8 +45,18 @@ function add_joint!(g::BVHGraph, v₋₁::Integer, v₊₁::Integer, name::Abstr
 end
 
 add_joint!(v₋₁::Integer, v₊₁::Integer, name::AbstractString; fraction::Float64 = 0.5) = g -> add_joint!(g, v₋₁, v₊₁, name, fraction = fraction)
+add_joint!(g::BVHGraph, v₋₁::AbstractString, v₊₁::AbstractString, name::AbstractString; fraction::Float64 = 0.5) = add_joint!(g, find(g, v₋₁), find(g, v₊₁), name, fraction = fraction)
 add_joint!(v₋₁::AbstractString, v₊₁::AbstractString, name::AbstractString; fraction::Float64 = 0.5) = g -> add_joint!(g, find(g, v₋₁), find(g, v₊₁), name, fraction = fraction)
 
+"""
+    add_joint!(g::BVHGraph, v₋₁::Integer, name::AbstractString, off::Vector{Float64}, nb::Vector = outneighbors(g, v₋₁))
+
+Add a vertex named `name` with offset `off` as an outneighbor to `v₋₁`. 
+The outneighbors of `v₋₁` that should be attached as outneighbors to the new vertex can be specified. 
+
+"JOINT" is automatically added in front of `name`. 
+`v₋₁` can also be identified by its name.
+"""
 function add_joint!(g::BVHGraph, v₋₁::Integer, name::AbstractString, off::Vector{Float64}, nb::Vector = outneighbors(g, v₋₁))
     v = add_vertex!(g, name = "JOINT $(name)", sequence = sequence(g, v₋₁), rotations = zeros(Float64, nframes(g), 3))
 
@@ -96,6 +122,15 @@ end
 change_sequences!(sym::Symbol) = g -> change_sequences!(g, sym)
 
 
+"""
+    project!(g::BVHGraph, h::BVHGraph, T::Matrix = Matrix(1.0I, 3, 3))
+
+Transfer the rotations of each vertex in `h` to the corresponding vertex in `g`. 
+The corresponding vertices must have the same names. 
+`T` is a rotation matrix that should be provided if the global orientations of `g` and `h` differ.
+
+See also: [`replace_offset!`](@ref), [`replace_offsets!`](@ref)
+"""
 function project!(g::BVHGraph, h::BVHGraph, T::Matrix = Matrix(1.0I, 3, 3))
     for hv in vertices(h)
 
@@ -120,6 +155,18 @@ end
 project!(x...) = g -> project!(g, x...)
 
 
+"""
+    remove_joint!(g::BVHGraph, v::Integer, v₊₁::Integer = outneighbors(g, v) != [] ? outneighbors(g, v)[1] : 0)
+
+Remove a vertex `v` and adjust the offsets and rotations of the surrounding vertices in such a way 
+that deviations from their original positions are minimized.
+
+In the case that `v` possesses multiple outneighbors, a neighbor `v₊₁` can be specified that 
+will be prioritized when adjusting rotations.
+`v` and `v₊₁` can also be identified by their name.
+
+See also: [`remove_joints!`](@ref), [`optimize_offsets!`](@ref)
+"""
 function remove_joint!(g::BVHGraph, v::Integer, v₊₁::Integer = outneighbors(g, v) != [] ? outneighbors(g, v)[1] : 0)
     v₋₁ = inneighbors(g, v)[1]
 
@@ -167,6 +214,14 @@ remove_joint!(v::Integer, x...) = g -> remove_joint!(g, v, x...)
 remove_joint!(nameᵥ::AbstractString, nameᵥ₊₁::AbstractString) = g -> remove_joint!(g, find(g, nameᵥ), find(g, nameᵥ₊₁))
 
 
+"""
+    remove_joints!(g::BVHGraph, names::AbstractString...)
+
+Remove every vertex in `names` and adjust the offsets and rotations of the surrounding vertices 
+in such a way that deviations from their original positions are minimized.
+
+See also: [`remove_joint!`](@ref), [`optimize_offsets!`](@ref)
+"""
 function remove_joints!(g::BVHGraph, names::AbstractString...)
     for nameᵥ in names
         remove_joint!(g, find(g, nameᵥ))
@@ -178,6 +233,11 @@ end
 remove_joints!(names::AbstractString...) = g -> remove_joints!(g, names...)
 
 
+"""
+    rename!(g::BVHGraph, dict::Dict{String,String})
+
+Change the names of all vertices in keys to their values.
+"""
 function rename!(g::BVHGraph, dict::Dict{String,String})
     for k in keys(dict)
         name!(g, find(g, k), "JOINT $(dict[k])")
@@ -189,6 +249,16 @@ end
 rename!(dict::Dict{String,String}) = g -> rename!(g, dict)
 
 
+"""
+    replace_offset!(g::BVHGraph, h::BVHGraph, gv₊₁::Integer, T::Matrix{Float64} = Matrix(1.0I, 3, 3); change_rotation::Bool = true)
+
+Replace the offset of a vertex `gv₊₁` in `g` with the offset of the corresponding vertex in `h`. 
+The corresponding vertex and its inneighbor must have the same names as those in `g`. 
+The rotations of the surrounding vertices are adjusted. 
+`T` is a rotation matrix that should be provided if the global orientations of `g` and `h` differ.
+
+See also: [`replace_offsets!`](@ref), [`project!`](@ref)
+"""
 function replace_offset!(g::BVHGraph, h::BVHGraph, gv₊₁::Integer, T::Matrix{Float64} = Matrix(1.0I, 3, 3); change_rotation::Bool = true)
     gv = inneighbors(g, gv₊₁)[1]
     hv = find(h, name(g, gv))
@@ -219,6 +289,17 @@ function replace_offset!(g::BVHGraph, h::BVHGraph, gv₊₁::Integer, T::Matrix{
 end
 
 
+"""
+    replace_offsets!(g::BVHGraph, h::BVHGraph, exclude::Vector, T::Matrix{Float64} = Matrix(1.0I, 3, 3))
+
+Replace the offsets of all vertices in `g`, except those in `exclude`, with the offsets of 
+their corresponding vertices in `h`.
+The corresponding vertex and its inneighbor must have the same names as those in `g`. 
+The rotations of the surrounding vertices are adjusted. 
+`T` is a rotation matrix that should be provided if the global orientations of `g` and `h` differ.
+
+See also: [`replace_offset!`](@ref), [`project!`](@ref)
+"""
 function replace_offsets!(g::BVHGraph, h::BVHGraph, exclude::Vector, T::Matrix{Float64} = Matrix(1.0I, 3, 3))
     push!(exclude, 1)
 
@@ -236,6 +317,11 @@ end
 replace_offsets!(x...) = g -> replace_offsets!(g, x...)
 
 
+"""
+    scale!(g::BVHGraph, scale::Float64)
+
+Multiply all offsets as well as the positions of ROOT by `scale`.
+"""
 function scale!(g::BVHGraph, scale::Float64)
     for e in edges(g)
         offset!(g, src(e), dst(e), offset(g, src(e), dst(e)) * scale)
@@ -249,6 +335,11 @@ end
 scale!(scale::Float64) = g -> scale!(g, scale)
 
 
+"""
+    zero!(g::BVHGraph)
+
+Change all rotations as well as the positions of ROOT to zero.
+"""
 function zero!(g::BVHGraph)
     frames = nframes(g)
     positions!(g, zeros(Float64, frames, 3))

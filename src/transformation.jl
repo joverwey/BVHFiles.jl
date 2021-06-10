@@ -272,13 +272,13 @@ function replace_offset!(g::BVHGraph, h::BVHGraph, gv₊₁::Integer, T::Matrix{
         B = rotation_between(hoffᵥ₊₁, goffᵥ₊₁)
 
         for f in frames(g)
-            Rᵥ = rotation(g, gv, symᵥ, f)
+            Rᵥ = rotation(g, gv, f)
             rotation!(g, gv, f, B * Rᵥ)
         
             for n in outneighbors(g, gv)
         
                 if outneighbors(g, n) != []
-                    Rᵥ₊₁ = rotation(g, n, symᵥ₊₁, f)
+                    Rᵥ₊₁ = rotation(g, n, f)
                     rotation!(g, n, f, inv(Rᵥ) * inv(B) * Rᵥ * Rᵥ₊₁)
                 end
             end

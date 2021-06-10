@@ -12,11 +12,11 @@ BVH.jl uses [graphs](https://github.com/JuliaGraphs/LightGraphs.jl) to represent
 
 ## Examples
 
-![Original small](https://user-images.githubusercontent.com/85636219/121529929-2d5e5d80-c9fd-11eb-9b88-8622ed137318.png)
-![Icon small](https://user-images.githubusercontent.com/85636219/121533093-3ac91700-ca00-11eb-9d48-8eff6ab156bc.png)
-![Transformed small](https://user-images.githubusercontent.com/85636219/121529954-351e0200-c9fd-11eb-8820-7458841fd94f.png)
-![Icon small](https://user-images.githubusercontent.com/85636219/121533093-3ac91700-ca00-11eb-9d48-8eff6ab156bc.png)
-![Result small](https://user-images.githubusercontent.com/85636219/121530043-4a932c00-c9fd-11eb-8dae-dd53e47e847d.png)
+![Original new](https://user-images.githubusercontent.com/85636219/121555428-4b36bd00-ca13-11eb-9ef7-8341cf912ba0.png)
+![Icon new](https://user-images.githubusercontent.com/85636219/121555373-3eb26480-ca13-11eb-89e2-074c1e0da9ae.png)
+![Transformed new](https://user-images.githubusercontent.com/85636219/121555473-5558bb80-ca13-11eb-9ad7-f23339926045.png)
+![Icon new](https://user-images.githubusercontent.com/85636219/121555373-3eb26480-ca13-11eb-89e2-074c1e0da9ae.png)
+![Result new](https://user-images.githubusercontent.com/85636219/121555540-630e4100-ca13-11eb-83a6-a258653f5b4b.png)
 
 
 

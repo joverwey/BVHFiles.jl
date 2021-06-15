@@ -179,7 +179,7 @@ function remove_joint!(g::BVHGraph, v::Integer, v₊₁::Integer = outneighbors(
             Rᵥ = rotation(g, v, f)
             Rᵥ₋₁ = rotation(g, v₋₁, f)
             B = rotation_between(o, inv(Rᵥ) * oᵥ + oᵥ₊₁)
-            rotation!(g, v₋₁, f, Rᵥ₋₁ .* Rᵥ .* B)
+            rotation!(g, v₋₁, f, Rᵥ₋₁ * Rᵥ * B)
 
             for n in outneighbors(g, v)
 
@@ -191,7 +191,7 @@ function remove_joint!(g::BVHGraph, v::Integer, v₊₁::Integer = outneighbors(
             for n in outneighbors(g, v₋₁)
 
                 if outneighbors(g, n) != []
-                    rotation!(g, n, f, inv(B) .* inv(Rᵥ) .* rotation(g, n, f))
+                    rotation!(g, n, f, inv(B) * inv(Rᵥ) * rotation(g, n, f))
                 end
             end
         end

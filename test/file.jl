@@ -1,4 +1,4 @@
-using BVH
+using BVHFiles
 using Test
 
 
@@ -56,6 +56,7 @@ using Test
     add_joint!(g, "lFoot", "lMetatarsals", [0.0, ofoot[3] / 70, ofoot[3] / 70])
     add_joint!(g, "rFoot", "rMetatarsals", [0.0, ofoot[3] / 70, ofoot[3] / 70])
     exclude = [find(g, "lCollar"), find(g, "rCollar"), find(g, "lThighBend"), find(g, "rThighBend")]
+    T = [-1.0 0.0 0.0; 0.0 0.0 1.0; 0.0 1.0 0.0]
 
     @test nv(g) == 34
     @test ne(g) == 33

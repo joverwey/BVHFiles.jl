@@ -9,7 +9,7 @@ short(a::Vector{SubString{String}}) = Symbol(a[1][1], a[2][1], a[3][1])
 long(sym::Symbol) = join([c * "rotation" for c ∈ string(sym)[1:3]], ' ')
 long_position(sym::Symbol) = join([c * "position" for c ∈ string(sym)[1:3]], ' ')
 
-constructor(sym::Symbol) = getfield(BVH, Symbol("Rot", sym))
+constructor(sym::Symbol) = getfield(BVHFiles, Symbol("Rot", sym))
 
 degrees(R::Rotation) = [getfield(R, θ) |> rad2deg for θ ∈ [Symbol("theta", n) for n ∈ 1:3]]
 

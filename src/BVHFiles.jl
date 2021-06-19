@@ -1,4 +1,4 @@
-module BVH
+module BVHFiles
 
 using LinearAlgebra, Rotations, LightGraphs
 

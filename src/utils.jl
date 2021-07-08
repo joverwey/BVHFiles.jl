@@ -30,3 +30,10 @@ function position!(g::BVHGraph, f::Integer, pos)
     positions(g)[f, :] = pos
     return nothing
 end
+
+Rx(ψ) = [1.0 0.0 0.0; 0.0 cos(ψ) -sin(ψ); 0.0 sin(ψ) cos(ψ)]
+Ry(θ) = [cos(θ) 0.0 sin(θ); 0.0 1.0 0.0; -sin(θ) 0.0 cos(θ)]
+Rz(φ) = [cos(φ) -sin(φ) 0.0; sin(φ) cos(φ) 0.0; 0.0 0.0 1.0]
+
+Rxyz(ψ, θ, φ) = Rx(ψ) * Ry(θ) * Rz(φ)
+Rxyz(v) = Rxyz(v...)

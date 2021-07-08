@@ -4,14 +4,16 @@ authors = ["Carl Bittendorf"]
 version = "0.1.0"
 
 [deps]
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 
 [compat]
-julia = "1"
 LightGraphs = "1.3.5"
 Rotations = "1.0.2"
+Flux = "0.12.4"
+julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

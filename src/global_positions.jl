@@ -67,8 +67,6 @@ This function does not store the result in `g`. `N` should not be changed.
 See also: [`global_positions!`](@ref)
 """
 function global_position(g::BVHGraph, v::Integer, f::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
-    p = zeros(Float64, 3)
-    
     if outneighbors(g, v) != []
         R = rotation(g, v, f)
     else
@@ -82,7 +80,7 @@ function global_position(g::BVHGraph, v::Integer, f::Integer, N::Matrix{Float64}
                 R[2, 1] R[2, 2] R[2, 3] off[2]; 
                 R[3, 1] R[3, 2] R[3, 3] off[3]; 
                 0.0 0.0 0.0 1.0] * N
-        p = global_position(g, v₋₁, f, A)
+        return global_position(g, v₋₁, f, A)
     else
         off = offset(g)
         pos = positions(g)[f, :]
@@ -90,8 +88,6 @@ function global_position(g::BVHGraph, v::Integer, f::Integer, N::Matrix{Float64}
                 R[2, 1] R[2, 2] R[2, 3] pos[2] + off[2]; 
                 R[3, 1] R[3, 2] R[3, 3] pos[3] + off[3]; 
                 0.0 0.0 0.0 1.0] * N
-        p = A[1:3, 4]
+        return A[1:3, 4]
     end
-
-    return p
 end

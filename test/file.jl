@@ -1,5 +1,6 @@
 using BVHFiles
 using Test
+using Flux
 
 
 @testset "file" begin
@@ -12,10 +13,12 @@ using Test
         remove_joint!("J_C7", "J_C6") |>
         remove_joint!("J_C6", "J_C5") |>
         remove_joints!("J_C4", "J_C3", "J_C2", "J_C1", "J_Atlas") |>
-        optimize_offsets!
+        optimize_offsets! |>
+        optimize_rotations!(ADAM, 0.005, 10, [1, 2, 3, 4, 6, 8, 9, 10, 12, 14])
 
     @test nv(g) == 25
     @test ne(g) == 24
+    @test total_squared_errors(g) < 36.335
 
     dict = Dict(  "J_L_Hip" => "lThighBend", 
                     "J_R_Hip" => "rThighBend", 

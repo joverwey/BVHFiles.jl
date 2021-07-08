@@ -34,6 +34,7 @@ https://user-images.githubusercontent.com/85636219/121430877-f6deff00-c978-11eb-
 - Adding frames
 - Loss functions
 - Optimizing offsets
+- Optimizing rotations using gradient descent
 - Changing rotation sequences
 - Scaling
 - Transfer movements to different hierarchies

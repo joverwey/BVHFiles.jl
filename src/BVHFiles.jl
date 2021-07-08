@@ -1,6 +1,6 @@
 module BVHFiles
 
-using LinearAlgebra, Rotations, LightGraphs
+using LinearAlgebra, Rotations, LightGraphs, Flux
 
 
 include("BVHGraphs.jl")

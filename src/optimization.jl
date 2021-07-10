@@ -90,8 +90,6 @@ be excluded from the algorithm by putting them in `exclude`. This can be useful 
 of the graph (for example the legs) have not been changed and therefore don't need 
 optimization.
 
-This function currently changes the rotation sequences of all vertices to `XYZ`.
-
 # Examples
 ```julia
 julia> g = load("Example.bvh") |>
@@ -109,7 +107,6 @@ Name: Example.bvh
 See also: [`optimize_offsets!`](@ref), [`total_squared_errors`](@ref)
 """
 function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Integer, exclude::Vector{<:Integer} = Integer[])
-    change_sequences!(g, :XYZ)
     vinclude = [v for v in filter(v -> v ∉ exclude, vertices(g))]
     vps = [v for v in filter(v -> outneighbors(g, v) != [], vinclude)]
 
@@ -130,9 +127,9 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
         function calculate_position(v::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
             if outneighbors(g, v) != []
                 if v in vps
-                    R = Rxyz(p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
+                    R = ROT(g, v, p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
                 else
-                    R = Rxyz([deg2rad(θ) for θ in rotations(g, v, f)])
+                    R = ROT(g, v, [deg2rad(θ) for θ in rotations(g, v, f)])
                 end
             else
                 R = Matrix(1.0I, 3, 3)

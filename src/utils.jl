@@ -31,9 +31,37 @@ function position!(g::BVHGraph, f::Integer, pos)
     return nothing
 end
 
-Rx(ψ) = [1.0 0.0 0.0; 0.0 cos(ψ) -sin(ψ); 0.0 sin(ψ) cos(ψ)]
-Ry(θ) = [cos(θ) 0.0 sin(θ); 0.0 1.0 0.0; -sin(θ) 0.0 cos(θ)]
-Rz(φ) = [cos(φ) -sin(φ) 0.0; sin(φ) cos(φ) 0.0; 0.0 0.0 1.0]
+RX(ψ) = [1.0 0.0 0.0; 0.0 cos(ψ) -sin(ψ); 0.0 sin(ψ) cos(ψ)]
+RY(θ) = [cos(θ) 0.0 sin(θ); 0.0 1.0 0.0; -sin(θ) 0.0 cos(θ)]
+RZ(φ) = [cos(φ) -sin(φ) 0.0; sin(φ) cos(φ) 0.0; 0.0 0.0 1.0]
 
+for name in ("RXYZ", "RXYX", "RXZY", "RXZX", "RYXZ", "RYZX", "RYXY", "RYZY", "RZXY", "RZYX", "RZXZ", "RZYZ")
+    s = name * "(ψ, θ, φ) = " * "R" * name[2] * "(ψ) * " * "R" * name[3] * "(θ) * " * "R" * name[4] * "(φ)"
+    eval(Meta.parse(s))
+end
+
+function ROT(g::BVHGraph, v::Integer, ψ, θ, φ)
+    sym = sequence(g, v)
+    f = getfield(BVHFiles, Symbol("R", string(sym)))
+    return f(ψ, θ, φ)
+end
+
+ROT(g::BVHGraph, v::Integer, vec) = ROT(g, v, vec...)
+
+#= 
 Rxyz(ψ, θ, φ) = Rx(ψ) * Ry(θ) * Rz(φ)
 Rxyz(v) = Rxyz(v...)
+Rxyx(ψ, θ, φ) = Rx(ψ) * Ry(θ) * Rx(φ)
+Rxyx(v) = Rxyx(v...)
+Rxzy(ψ, θ, φ) = Rx(ψ) * Rz(θ) * Ry(φ)
+Rxzy(v) = Rxzy(v...)
+Rxzx(ψ, θ, φ) = Rx(ψ) * Rz(θ) * Rx(φ)
+Rxzx(v) = Rxzx(v...)
+Ryxz(ψ, θ, φ) = Ry(ψ) * Rx(θ) * Rz(φ)
+Ryxz(v) = Ryxz(v...) =#
+    # Rψ = getfield(BVHFiles, Symbol("R", string(sym)[2]))
+    # Rθ = getfield(BVHFiles, Symbol("R", string(sym)[3]))
+    # Rφ = getfield(BVHFiles, Symbol("R", string(sym)[4]))
+        # @eval function $sym(ψ, θ, φ)
+    #    return Rψ(ψ) * Rθ(θ) * Rφ(φ)
+    # end

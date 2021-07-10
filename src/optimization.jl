@@ -125,12 +125,10 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
         ps = params(p)
 
         function calculate_position(v::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
-            if outneighbors(g, v) != []
-                if v in vps
-                    R = ROT(g, v, p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
-                else
-                    R = ROT(g, v, [deg2rad(θ) for θ in rotations(g, v, f)])
-                end
+            if v in vps
+                R = ROT(g, v, p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
+            elseif outneighbors(g, v) != []
+                R = ROT(g, v, [deg2rad(θ) for θ in rotations(g, v, f)])
             else
                 R = Matrix(1.0I, 3, 3)
             end

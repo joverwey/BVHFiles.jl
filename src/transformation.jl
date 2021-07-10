@@ -1,4 +1,4 @@
-export add_frames!, add_joint!, change_sequence!, change_sequences!, project!, 
+export add_frames!, add_joint!, change_sequence!, change_sequences!, interpolate!, project!, 
 remove_joint!, remove_joints!, rename!, replace_offset!, replace_offsets!, scale!, zero!
 
 
@@ -120,6 +120,64 @@ function change_sequences!(g::BVHGraph, sym::Symbol)
 end
 
 change_sequences!(sym::Symbol) = g -> change_sequences!(g, sym)
+
+
+"""
+    interpolate!(g::BVHGraph, h::Integer = 1)
+
+Add a number of `h` frames between each pair of consecutive frames by interpolating between 
+them using LERP.
+"""
+function interpolate!(g::BVHGraph, h::Integer = 1)
+    frames = nframes(g)
+    nframes!(g, (h + 1) * frames - h)
+    frametime!(g, frametime(g) / (h + 1))
+    fraction = 1 / (h + 1)
+
+    for v in vertices(g)
+
+        if outneighbors(g, v) != []
+            sym = sequence(g, v)
+            constr = constructor(sym)
+            M = zeros(Float64, (h + 1) * frames - h, 3)
+            M[1, :] = rotations(g, v, 1)
+
+            for f in 1:frames - 1
+                q₀ = UnitQuaternion(rotation(g, v, sym, f))
+                R₁ = rotation(g, v, sym, f + 1)
+                q₁ = UnitQuaternion(R₁)
+
+                for i in 1:h
+                    R = q₀ * (1 - (fraction * i)) + q₁ * (fraction * i)
+                    M[(h + 1) * f + (i - h), :] = R |> constr |> degrees
+                end
+
+                M[(h + 1) * f + 1, :] = R₁ |> degrees
+            end
+
+            rotations!(g, v, M)
+        end
+    end
+
+    P = zeros(Float64, (h + 1) * frames - h, 3)
+    P[1, :] = positions(g)[1, :]
+
+    for f in 1:frames - 1
+        p₀ = positions(g)[f, :]
+        p₁ = positions(g)[f + 1, :]
+
+        for i in 1:h
+            P[(h + 1) * f + (i - h), :] = p₀ * (1 - (fraction * i)) + p₁ * (fraction * i)
+        end
+        
+        P[(h + 1) * f + 1, :] = p₁
+    end
+
+    positions!(g, P)
+    return g
+end
+
+interpolate!(h::Integer = 1) = g -> interpolate!(g, h)
 
 
 """

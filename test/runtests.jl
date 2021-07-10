@@ -9,3 +9,7 @@ end
 @testset "File" begin
     include("file.jl")
 end
+
+@testset "Interpolation" begin
+    include("interpolation.jl")
+end

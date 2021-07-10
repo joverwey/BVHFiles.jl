@@ -47,21 +47,3 @@ function ROT(g::BVHGraph, v::Integer, ψ, θ, φ)
 end
 
 ROT(g::BVHGraph, v::Integer, vec) = ROT(g, v, vec...)
-
-#= 
-Rxyz(ψ, θ, φ) = Rx(ψ) * Ry(θ) * Rz(φ)
-Rxyz(v) = Rxyz(v...)
-Rxyx(ψ, θ, φ) = Rx(ψ) * Ry(θ) * Rx(φ)
-Rxyx(v) = Rxyx(v...)
-Rxzy(ψ, θ, φ) = Rx(ψ) * Rz(θ) * Ry(φ)
-Rxzy(v) = Rxzy(v...)
-Rxzx(ψ, θ, φ) = Rx(ψ) * Rz(θ) * Rx(φ)
-Rxzx(v) = Rxzx(v...)
-Ryxz(ψ, θ, φ) = Ry(ψ) * Rx(θ) * Rz(φ)
-Ryxz(v) = Ryxz(v...) =#
-    # Rψ = getfield(BVHFiles, Symbol("R", string(sym)[2]))
-    # Rθ = getfield(BVHFiles, Symbol("R", string(sym)[3]))
-    # Rφ = getfield(BVHFiles, Symbol("R", string(sym)[4]))
-        # @eval function $sym(ψ, θ, φ)
-    #    return Rψ(ψ) * Rθ(θ) * Rφ(φ)
-    # end

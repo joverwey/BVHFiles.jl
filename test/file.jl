@@ -63,4 +63,15 @@ using Flux
 
     @test nv(g) == 34
     @test ne(g) == 33
+
+    replace_offsets!(g, load("DAZ3D.bvh"), exclude, T) |>
+    change_sequences!(:ZXY) |>
+    scale!(7.0)
+
+    d = load("DAZ3D.bvh") |>
+    zero! |>
+    add_frames!(240) |>
+    project!(g, T)
+
+    @test nframes(d) == nframes(g)
 end

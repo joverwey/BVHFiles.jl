@@ -74,4 +74,5 @@ using Flux
     project!(g, T)
 
     @test nframes(d) == nframes(g)
+    g
 end

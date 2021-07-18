@@ -188,6 +188,8 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
         for v in vps
             rotations(g, v)[f, :] = [rad2deg(θ) for θ in best_params[1][v * 3 - 2:v * 3]]
         end
+
+        println("Frame: $f \t Loss: $best_loss")
     end
 
     return g

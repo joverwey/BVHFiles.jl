@@ -114,14 +114,26 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
         original = [positions(g, v, f) for v in vinclude]
         p = Float64[]
         c = Float64[]
+        s = Symbol[]
+        o = Vector[]
 
         for v in vertices(g)
             if outneighbors(g, v) != []
-                append!(p, [deg2rad(θ) for θ in rotations(g, v, f)])
-                append!(c, [deg2rad(θ) for θ in rotations(g, v, f)])
+                list = [deg2rad(θ) for θ in rotations(g, v, f)]
+                append!(p, list)
+                append!(c, list)
+                push!(s, sequence(g, v))
             else
                 append!(p, [0.0, 0.0, 0.0])
                 append!(c, [0.0, 0.0, 0.0])
+                push!(s, :XYZ)
+            end
+
+            if v == 1
+                push!(o, offset(g))
+            else
+                v₋₁ = inneighbors(g, v)[1]
+                push!(o, offset(g, v₋₁, v))
             end
         end
 
@@ -129,21 +141,21 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
 
         function calculate_position(v::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
             if v in vps
-                R = ROT(g, v, p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
+                R = ROT(g, s[v], p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
             else
-                R = ROT(g, v, c[v * 3 - 2], c[v * 3 - 1], c[v * 3])
+                R = ROT(g, s[v], c[v * 3 - 2], c[v * 3 - 1], c[v * 3])
             end
             
             if v != 1
                 v₋₁ = inneighbors(g, v)[1]
-                off = offset(g, v₋₁, v)
+                off = o[v]
                 A = [   R[1, 1] R[1, 2] R[1, 3] off[1]; 
                         R[2, 1] R[2, 2] R[2, 3] off[2]; 
                         R[3, 1] R[3, 2] R[3, 3] off[3]; 
                         0.0 0.0 0.0 1.0] * N
                 return calculate_position(v₋₁, A)
             else
-                off = offset(g)
+                off = o[v]
                 pos = positions(g)[f, :]
                 A = [   R[1, 1] R[1, 2] R[1, 3] pos[1] + off[1]; 
                         R[2, 1] R[2, 2] R[2, 3] pos[2] + off[2]; 

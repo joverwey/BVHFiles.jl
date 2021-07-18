@@ -47,3 +47,10 @@ function ROT(g::BVHGraph, v::Integer, ψ, θ, φ)
 end
 
 ROT(g::BVHGraph, v::Integer, vec) = ROT(g, v, vec...)
+
+function ROT(g::BVHGraph, sym::Symbol, ψ, θ, φ)
+    f = getfield(BVHFiles, Symbol("R", string(sym)))
+    return f(ψ, θ, φ)
+end
+
+ROT(g::BVHGraph, sym::Symbol, vec) = ROT(g, sym, vec...)

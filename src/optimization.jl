@@ -115,7 +115,7 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
         p = Float64[]
         c = Float64[]
         s = Symbol[]
-        o = Vector[]
+        o = Vector{Float64}[]
 
         for v in vertices(g)
             if outneighbors(g, v) != []

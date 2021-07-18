@@ -19,4 +19,5 @@ using Test
     interpolate!(3)
 
     @test nframes(g) == 961
+    nframes(g)
 end

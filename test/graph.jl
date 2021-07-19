@@ -3,6 +3,8 @@ using Test
 
 
 @testset "graph" begin
+    println("Starting test of 'graph'")
+
     g = BVHGraph(3)
     @test add_edge!(g, 1, 2) == true
     @inferred add_edge!(g, 2, 3, offset = [1.0, 3.0, 5.0])

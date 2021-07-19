@@ -4,6 +4,8 @@ using Flux
 
 
 @testset "file" begin
+    println("Starting test of 'file'")
+
     g = load("Example.bvh") |>
         global_positions! |>
         remove_joint!(7) |>

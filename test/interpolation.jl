@@ -3,6 +3,8 @@ using Test
 
 
 @testset "interpolation" begin
+    println("Starting test of 'interpolation'")
+
     g = load("Example.bvh") |>
         interpolate!(1)
 

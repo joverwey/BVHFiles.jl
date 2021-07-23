@@ -71,9 +71,9 @@ using Flux
     scale!(7.0)
 
     d = load("DAZ3D.bvh") |>
-    zero! |>
-    add_frames!(240) |>
-    project!(g, T)
+        zero! |>
+        add_frames!(240) |>
+        project!(g, T)
 
     @test nframes(d) == nframes(g)
 end

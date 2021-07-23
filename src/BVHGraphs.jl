@@ -37,6 +37,7 @@ Base.@kwdef mutable struct EProps
     offset::Vector{Float64} = zeros(Float64, 3)
 end
 
+
 """
     struct BVHGraph{T <: Integer} <: AbstractGraph{T}
 

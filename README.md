@@ -38,4 +38,5 @@ https://user-images.githubusercontent.com/85636219/121430877-f6deff00-c978-11eb-
 - Changing rotation sequences
 - Scaling
 - Transfer movements to different hierarchies
+- Interpolation between frames
 - Save BVH files

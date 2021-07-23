@@ -90,8 +90,6 @@ be excluded from the algorithm by putting them in `exclude`. This can be useful 
 of the graph (for example the legs) have not been changed and therefore don't need 
 optimization.
 
-This function currently changes the rotation sequences of all vertices to `XYZ`.
-
 # Examples
 ```julia
 julia> g = load("Example.bvh") |>
@@ -109,45 +107,55 @@ Name: Example.bvh
 See also: [`optimize_offsets!`](@ref), [`total_squared_errors`](@ref)
 """
 function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Integer, exclude::Vector{<:Integer} = Integer[])
-    change_sequences!(g, :XYZ)
     vinclude = [v for v in filter(v -> v ∉ exclude, vertices(g))]
     vps = [v for v in filter(v -> outneighbors(g, v) != [], vinclude)]
 
     for f in frames(g)
         original = [positions(g, v, f) for v in vinclude]
         p = Float64[]
+        c = Float64[]
+        s = Symbol[]
+        o = Vector{Float64}[]
 
         for v in vertices(g)
             if outneighbors(g, v) != []
-                append!(p, [deg2rad(θ) for θ in rotations(g, v, f)])
+                list = [deg2rad(θ) for θ in rotations(g, v, f)]
+                append!(p, list)
+                append!(c, list)
+                push!(s, sequence(g, v))
             else
                 append!(p, [0.0, 0.0, 0.0])
+                append!(c, [0.0, 0.0, 0.0])
+                push!(s, :XYZ)
+            end
+
+            if v == 1
+                push!(o, offset(g))
+            else
+                v₋₁ = inneighbors(g, v)[1]
+                push!(o, offset(g, v₋₁, v))
             end
         end
 
         ps = params(p)
 
         function calculate_position(v::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
-            if outneighbors(g, v) != []
-                if v in vps
-                    R = Rxyz(p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
-                else
-                    R = Rxyz([deg2rad(θ) for θ in rotations(g, v, f)])
-                end
+            if v in vps
+                R = ROT(g, s[v], p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
             else
-                R = Matrix(1.0I, 3, 3)
+                R = ROT(g, s[v], c[v * 3 - 2], c[v * 3 - 1], c[v * 3])
             end
             
             if v != 1
                 v₋₁ = inneighbors(g, v)[1]
-                off = offset(g, v₋₁, v)
+                off = o[v]
                 A = [   R[1, 1] R[1, 2] R[1, 3] off[1]; 
                         R[2, 1] R[2, 2] R[2, 3] off[2]; 
                         R[3, 1] R[3, 2] R[3, 3] off[3]; 
                         0.0 0.0 0.0 1.0] * N
                 return calculate_position(v₋₁, A)
             else
-                off = offset(g)
+                off = o[v]
                 pos = positions(g)[f, :]
                 A = [   R[1, 1] R[1, 2] R[1, 3] pos[1] + off[1]; 
                         R[2, 1] R[2, 2] R[2, 3] pos[2] + off[2]; 
@@ -180,6 +188,8 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
         for v in vps
             rotations(g, v)[f, :] = [rad2deg(θ) for θ in best_params[1][v * 3 - 2:v * 3]]
         end
+
+        println("Frame: $f \t Loss: $best_loss")
     end
 
     return g

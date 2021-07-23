@@ -37,7 +37,11 @@ Base.@kwdef mutable struct EProps
     offset::Vector{Float64} = zeros(Float64, 3)
 end
 
+"""
+    struct BVHGraph{T <: Integer} <: AbstractGraph{T}
 
+Used to store motion capture data. Usually constructed by using `load` on a BVH file. 
+"""
 struct BVHGraph{T <: Integer} <: AbstractGraph{T}
     graph::SimpleDiGraph{T}
     gprops::GProps

@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/CarlBittendorf/BVHFiles.jl.svg?branch=master)](https://travis-ci.com/CarlBittendorf/BVHFiles.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/CarlBittendorf/BVH.jl?svg=true)](https://ci.appveyor.com/project/CarlBittendorf/BVH-jl)
-[![Coverage](https://codecov.io/gh/CarlBittendorf/BVH.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/CarlBittendorf/BVH.jl)
+[![codecov](https://codecov.io/gh/CarlBittendorf/BVHFiles.jl/branch/master/graph/badge.svg?token=Q64CqWjG0S)](https://codecov.io/gh/CarlBittendorf/BVHFiles.jl)
 [![Coverage Status](https://coveralls.io/repos/github/CarlBittendorf/BVHFiles.jl/badge.svg?branch=master)](https://coveralls.io/github/CarlBittendorf/BVHFiles.jl?branch=master)
 
 BVHFiles.jl is a package for working with BioVisionHierarchy files, a file format which stores motion capture data in a hierarchical structure. 

@@ -4,10 +4,10 @@
 
 Base.split(dlm) = s -> split(s, dlm, keepempty = false)
 
-short(a::Vector{SubString{String}}) = Symbol(a[1][1], a[2][1], a[3][1])
+shorten(a::Vector{SubString{String}}) = Symbol(a[1][1], a[2][1], a[3][1])
 
-long(sym::Symbol) = join([c * "rotation" for c ∈ string(sym)[1:3]], ' ')
-long_position(sym::Symbol) = join([c * "position" for c ∈ string(sym)[1:3]], ' ')
+extend_rotation(sym::Symbol) = join([c * "rotation" for c ∈ string(sym)[1:3]], ' ')
+extend_position(sym::Symbol) = join([c * "position" for c ∈ string(sym)[1:3]], ' ')
 
 constructor(sym::Symbol) = getfield(BVHFiles, Symbol("Rot", sym))
 
@@ -26,31 +26,26 @@ function rotation!(g::BVHGraph, v::Integer, f::Integer, rot)
     return nothing
 end
 
-function position!(g::BVHGraph, f::Integer, pos)
-    positions(g)[f, :] = pos
-    return nothing
-end
+Rx(ψ) = [1.0 0.0 0.0; 0.0 cos(ψ) -sin(ψ); 0.0 sin(ψ) cos(ψ)]
+Ry(θ) = [cos(θ) 0.0 sin(θ); 0.0 1.0 0.0; -sin(θ) 0.0 cos(θ)]
+Rz(φ) = [cos(φ) -sin(φ) 0.0; sin(φ) cos(φ) 0.0; 0.0 0.0 1.0]
 
-RX(ψ) = [1.0 0.0 0.0; 0.0 cos(ψ) -sin(ψ); 0.0 sin(ψ) cos(ψ)]
-RY(θ) = [cos(θ) 0.0 sin(θ); 0.0 1.0 0.0; -sin(θ) 0.0 cos(θ)]
-RZ(φ) = [cos(φ) -sin(φ) 0.0; sin(φ) cos(φ) 0.0; 0.0 0.0 1.0]
-
-for name in ("RXYZ", "RXYX", "RXZY", "RXZX", "RYXZ", "RYZX", "RYXY", "RYZY", "RZXY", "RZYX", "RZXZ", "RZYZ")
+for name in ("Rxyz", "Rxyx", "Rxzy", "Rxzx", "Ryxz", "Ryzx", "Ryxy", "Ryzy", "Rzxy", "Rzyx", "Rzxz", "Rzyz")
     s = name * "(ψ, θ, φ) = " * "R" * name[2] * "(ψ) * " * "R" * name[3] * "(θ) * " * "R" * name[4] * "(φ)"
     eval(Meta.parse(s))
 end
 
-function ROT(g::BVHGraph, v::Integer, ψ, θ, φ)
+function rot(g::BVHGraph, v::Integer, ψ, θ, φ)
     sym = sequence(g, v)
-    f = getfield(BVHFiles, Symbol("R", string(sym)))
+    f = getfield(BVHFiles, Symbol("R", string(sym) |> lowercase))
     return f(ψ, θ, φ)
 end
 
-ROT(g::BVHGraph, v::Integer, vec) = ROT(g, v, vec...)
+rot(g::BVHGraph, v::Integer, vec) = rot(g, v, vec...)
 
-function ROT(g::BVHGraph, sym::Symbol, ψ, θ, φ)
-    f = getfield(BVHFiles, Symbol("R", string(sym)))
+function rot(sym::Symbol, ψ, θ, φ)
+    f = getfield(BVHFiles, Symbol("R", string(sym) |> lowercase))
     return f(ψ, θ, φ)
 end
 
-ROT(g::BVHGraph, sym::Symbol, vec) = ROT(g, sym, vec...)
+rot(sym::Symbol, vec) = rot(sym, vec...)

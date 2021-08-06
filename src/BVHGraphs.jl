@@ -9,7 +9,7 @@ import LightGraphs.SimpleGraphs: SimpleDiGraph, SimpleEdge, Edge, fadj, badj
 export BVHGraph, vertices, inneighbors, outneighbors, add_vertex!, add_edge!, 
 rem_vertex!, rem_edge!, props, edges, is_directed, eltype, edgetype, nv, ne, 
 has_vertex, has_edge, ==, zero, fadj, badj, issubset, neighbors, 
-name, name!, nframes, nframes!, frames, frametime, frametime!, offset, offset!, 
+name, name!, frames, frames!, frametime, frametime!, offset, offset!, 
 sequence, sequence!, rotations, rotations!, positions, positions!, 
 find, find_outneighbor, show, src, dst
 
@@ -20,7 +20,7 @@ Base.@kwdef mutable struct GProps
     offset::Vector{Float64} = zeros(Float64, 3)
     sequence::Symbol = :XYZ
     positions::Matrix{Float64} = zeros(Float64, 1, 3)
-    nframes::Int64 = 1
+    frames::Int64 = 1
     frametime::Float64 = 0.01
 end
 
@@ -55,12 +55,17 @@ function BVHGraph(n::Integer;
     offset::Vector{Float64} = zeros(Float64, 3),
     sequence::Symbol = :XYZ,
     positions::Matrix{Float64} = zeros(Float64, 1, 3),
-    nframes::Int64 = 1,
+    frames::Int64 = 1,
     frametime::Float64 = 0.01)
 
     T = eltype(n)
     g = SimpleDiGraph(n)
-    gprops = GProps(name = name, offset = offset, sequence = sequence, positions = positions, nframes = nframes, frametime = frametime)
+    gprops = GProps(name = name, 
+                    offset = offset, 
+                    sequence = sequence, 
+                    positions = positions, 
+                    frames = frames, 
+                    frametime = frametime)
     vprops = Dict{T,VProps}()
     eprops = Dict{SimpleEdge{T},EProps}()
 
@@ -68,7 +73,7 @@ function BVHGraph(n::Integer;
         vprops[v] = VProps()
     end
 
-    BVHGraph(g, gprops, vprops, eprops)
+    return BVHGraph(g, gprops, vprops, eprops)
 end
 
 
@@ -117,6 +122,7 @@ function rem_vertex!(g::BVHGraph, v::Integer)
     end
 
     if v != lastv
+
         for n in outneighbors(g, v)
             delete!(g.eprops, Edge(v, n))
         end
@@ -124,6 +130,7 @@ function rem_vertex!(g::BVHGraph, v::Integer)
         for n in inneighbors(g, v)
             delete!(g.eprops, Edge(n, v))
         end
+
     end
 
     delete!(g.vprops, lastv)
@@ -192,18 +199,23 @@ neighbors(g::BVHGraph, v::Integer) = outneighbors(g, v)
 
 name(g::BVHGraph) = getproperty(props(g), :name)
 name(g::BVHGraph, v::Integer) = getproperty(props(g, v), :name)
+name(v::Integer) = g -> name(g, v)
 
 name!(g::BVHGraph, name::AbstractString) = setproperty!(props(g), :name, name)
+name!(name::AbstractString) = g -> name!(g, name)
 name!(g::BVHGraph, v::Integer, name::AbstractString) = setproperty!(props(g, v), :name, name)
 name!(v::Integer, name::AbstractString) = g -> name!(g, v, name)
 
 
-nframes(g::BVHGraph) = getproperty(props(g), :nframes)
-nframes!(g::BVHGraph, f::Int64) = setproperty!(props(g), :nframes, f)
-frames(g::BVHGraph) = 1:getproperty(props(g), :nframes)
+frames(g::BVHGraph) = getproperty(props(g), :frames)
+
+frames!(g::BVHGraph, f::Int64) = setproperty!(props(g), :frames, f)
+frames!(f::Int64) = frames!(g, f)
+# frames(g::BVHGraph) = 1:getproperty(props(g), :frames)
 
 
 frametime(g::BVHGraph) = getproperty(props(g), :frametime)
+
 frametime!(g::BVHGraph, t::Float64) = setproperty!(props(g), :frametime, t)
 frametime!(t::Float64) = g -> frametime!(g, t)
 
@@ -214,16 +226,19 @@ offset(g::BVHGraph, d::Integer) = offset(g, inneighbors(g, d)[1], d)
 
 
 offset!(g::BVHGraph, o::Vector{Float64}) = setproperty!(props(g), :offset, o)
-offset!(g::BVHGraph, s, d, o::Vector{Float64}) = setproperty!(props(g, s, d), :offset, o)
-offset!(g::BVHGraph, d, o::Vector{Float64}) = offset!(g, inneighbors(g, d)[1], d, o)
+offset!(g::BVHGraph, s::Integer, d::Integer, o::Vector{Float64}) = setproperty!(props(g, s, d), :offset, o)
+offset!(g::BVHGraph, d::Integer, o::Vector{Float64}) = offset!(g, inneighbors(g, d)[1], d, o)
 
 
 sequence(g::BVHGraph) = getproperty(props(g), :sequence)
 sequence(g::BVHGraph, v::Integer) = getproperty(props(g, v), :sequence)
+sequence(v::Integer) = g -> sequence(g, v)
 
 
 sequence!(g::BVHGraph, sym::Symbol) = setproperty!(props(g), :sequence, sym)
+sequence!(sym::Symbol) = g -> sequence!(g, sym)
 sequence!(g::BVHGraph, v::Integer, sym::Symbol) = setproperty!(props(g, v), :sequence, sym)
+sequence!(v::Integer, sym::Symbol) = g -> sequence!(g, v, sym)
 
 
 rotations(g::BVHGraph, v::Integer) = getproperty(props(g, v), :rotations)
@@ -267,7 +282,7 @@ end
 function show(io::IO, g::BVHGraph)
     println(io, "BVHGraph")
     println(io, "Name: $(name(g))")
-    println(io, "Frames: $(nframes(g))")
+    println(io, "Frames: $(frames(g))")
     println(io, "Frame Time: $(frametime(g))")
     println(io, "Vertices: $(nv(g))\n")
     println(io, get_names_formatted(g))

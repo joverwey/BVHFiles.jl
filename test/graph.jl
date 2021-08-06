@@ -31,9 +31,8 @@ using Test
     sequence!(g, :ZXY)
     sequence!(g, 1, :ZXY)
 
-    @inferred nframes(g)
-    @test nframes(g) == 1
     @inferred frames(g)
+    @test frames(g) == 1
 
     @inferred frametime(g)
     @test frametime(g) == 0.01

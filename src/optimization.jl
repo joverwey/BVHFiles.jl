@@ -12,7 +12,7 @@ Only those vertices are taken into account that have got positions for every fra
 
 See also: [`total_squared_errors`](@ref)
 """
-squared_errors(g::BVHGraph, f::Integer) = sum(norm(positions(g, v, f) - global_position(g, v, f))^2 for v in filter(v -> size(positions(g, v), 1) == nframes(g), vertices(g)))
+squared_errors(g::BVHGraph, f::Integer) = sum(norm(positions(g, v, f) - global_position(g, v, f))^2 for v in filter(v -> size(positions(g, v), 1) == frames(g), vertices(g)))
 
 squared_errors(f::Integer) = g -> squared_errors(g, f)
 
@@ -27,7 +27,7 @@ Only those vertices are taken into account that have got positions for every fra
 
 See also: [`squared_errors`](@ref)
 """
-total_squared_errors(g::BVHGraph) = sum(squared_errors(g, f) for f in frames(g))
+total_squared_errors(g::BVHGraph) = sum(squared_errors(g, f) for f in 1:frames(g))
 
 total_squared_errors() = g -> total_squared_errors(g)
 
@@ -60,16 +60,16 @@ function optimize_offsets!(g::BVHGraph)
     for v in vertices(g)
         v == 1 && continue
         v₋₁ = inneighbors(g, v)[1]
-        off = offset(g, v₋₁, v)
+        o = offset(g, v₋₁, v)
         avg = 0.0
 
-        for f in frames(g)
+        for f in 1:frames(g)
             d = positions(g, v, f) - positions(g, v₋₁, f)
-            avg += norm(d) / nframes(g)
+            avg += norm(d) / frames(g)
         end
         
-        scale = avg / norm(off)
-        offset!(g, v₋₁, v, scale * off)
+        scale = avg / norm(o)
+        offset!(g, v₋₁, v, scale * o)
     end
 
     return g
@@ -110,56 +110,57 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
     vinclude = [v for v in filter(v -> v ∉ exclude, vertices(g))]
     vps = [v for v in filter(v -> outneighbors(g, v) != [], vinclude)]
 
-    for f in frames(g)
+    for f in 1:frames(g)
         original = [positions(g, v, f) for v in vinclude]
-        p = Float64[]
-        c = Float64[]
-        s = Symbol[]
-        o = Vector{Float64}[]
+        ps = Float64[]
+        cs = Float64[]
+        syms = Symbol[]
+        os = Vector{Float64}[]
 
         for v in vertices(g)
+
             if outneighbors(g, v) != []
                 list = [deg2rad(θ) for θ in rotations(g, v, f)]
-                append!(p, list)
-                append!(c, list)
-                push!(s, sequence(g, v))
+                append!(ps, list)
+                append!(cs, list)
+                push!(syms, sequence(g, v))
             else
-                append!(p, [0.0, 0.0, 0.0])
-                append!(c, [0.0, 0.0, 0.0])
-                push!(s, :XYZ)
+                append!(ps, [0.0, 0.0, 0.0])
+                append!(cs, [0.0, 0.0, 0.0])
+                push!(syms, :XYZ)
             end
 
             if v == 1
-                push!(o, offset(g))
+                push!(os, offset(g))
             else
                 v₋₁ = inneighbors(g, v)[1]
-                push!(o, offset(g, v₋₁, v))
+                push!(os, offset(g, v₋₁, v))
             end
         end
 
-        ps = params(p)
+        pars = params(ps)
 
         function calculate_position(v::Integer, N::Matrix{Float64} = Matrix(1.0I, 4, 4))
             if v in vps
-                R = ROT(g, s[v], p[v * 3 - 2], p[v * 3 - 1], p[v * 3])
+                R = rot(syms[v], ps[v * 3 - 2], ps[v * 3 - 1], ps[v * 3])
             else
-                R = ROT(g, s[v], c[v * 3 - 2], c[v * 3 - 1], c[v * 3])
+                R = rot(syms[v], cs[v * 3 - 2], cs[v * 3 - 1], cs[v * 3])
             end
             
             if v != 1
                 v₋₁ = inneighbors(g, v)[1]
-                off = o[v]
-                A = [   R[1, 1] R[1, 2] R[1, 3] off[1]; 
-                        R[2, 1] R[2, 2] R[2, 3] off[2]; 
-                        R[3, 1] R[3, 2] R[3, 3] off[3]; 
+                o = os[v]
+                A = [   R[1, 1] R[1, 2] R[1, 3] o[1]; 
+                        R[2, 1] R[2, 2] R[2, 3] o[2]; 
+                        R[3, 1] R[3, 2] R[3, 3] o[3]; 
                         0.0 0.0 0.0 1.0] * N
                 return calculate_position(v₋₁, A)
             else
-                off = o[v]
-                pos = positions(g)[f, :]
-                A = [   R[1, 1] R[1, 2] R[1, 3] pos[1] + off[1]; 
-                        R[2, 1] R[2, 2] R[2, 3] pos[2] + off[2]; 
-                        R[3, 1] R[3, 2] R[3, 3] pos[3] + off[3]; 
+                o = os[v]
+                p = positions(g)[f, :]
+                A = [   R[1, 1] R[1, 2] R[1, 3] p[1] + o[1]; 
+                        R[2, 1] R[2, 2] R[2, 3] p[2] + o[2]; 
+                        R[3, 1] R[3, 2] R[3, 3] p[3] + o[3]; 
                         0.0 0.0 0.0 1.0] * N
                 return A[1:3, 4]
             end
@@ -168,21 +169,21 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
         predict() = [calculate_position(v) for v in vinclude]
         loss() = sum(norm(p - p̂)^2 for (p, p̂) in zip(original, predict()))
         training_loss = loss()
-        best_params = ps
+        best_params = pars
         best_loss = training_loss
         opt = optimizer(η)
 
-        for i in 1:iterations
-            gs = gradient(ps) do 
+        for _ in 1:iterations
+            gs = gradient(pars) do 
                 training_loss = loss()
             end
     
             if training_loss < best_loss
                 best_loss = training_loss
-                best_params = ps
+                best_params = pars
             end
 
-            Flux.update!(opt, ps, gs)
+            Flux.update!(opt, pars, gs)
         end
 
         for v in vps
@@ -195,4 +196,4 @@ function optimize_rotations!(g::BVHGraph, optimizer, η::Number, iterations::Int
     return g
 end
 
-optimize_rotations!(optimizer, η, iterations::Integer, exclude::Vector{<:Integer} = Integer[]) = g -> optimize_rotations!(g, optimizer, η, iterations, exclude)
+optimize_rotations!(optimizer, η::Number, iterations::Integer, exclude::Vector{<:Integer} = Integer[]) = g -> optimize_rotations!(g, optimizer, η, iterations, exclude)

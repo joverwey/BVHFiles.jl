@@ -40,6 +40,7 @@ https://user-images.githubusercontent.com/85636219/121430877-f6deff00-c978-11eb-
 - Calculate global positions
 - Removal of joints 
 - Adding joints
+- Removal of frames
 - Adding frames
 - Loss functions
 - Optimizing offsets

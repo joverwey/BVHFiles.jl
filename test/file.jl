@@ -75,5 +75,18 @@ using Flux
         add_frames!(240) |>
         project!(g, T)
 
-    @test nframes(d) == nframes(g)
+    @test frames(d) == frames(g)
+
+
+    add_frames!(d, 10)
+
+    @test frames(d) == 251
+
+    remove_frames!(d, 20)
+
+    @test frames(d) == 231
+
+    remove_frames!(d, 20, false)
+
+    @test frames(d) == 211
 end

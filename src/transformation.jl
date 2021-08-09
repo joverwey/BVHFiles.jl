@@ -1,5 +1,6 @@
 export add_frames!, add_joint!, change_sequence!, change_sequences!, interpolate!, project!, 
-remove_joint!, remove_joints!, rename!, replace_offset!, replace_offsets!, scale!, zero!
+remove_frames!, remove_joint!, remove_joints!, rename!, replace_offset!, replace_offsets!, 
+scale!, zero!
 
 
 
@@ -10,20 +11,24 @@ Extend the animation by a number of `frames`.
 
 The positions and rotations for the additional frames are set to zero.
 """
-function add_frames!(g::BVHGraph, frames::Integer)
-    positions!(g, [positions(g); zeros(Float64, frames, 3)])
+function add_frames!(g::BVHGraph, f::Integer, to_end::Bool = true)
+    to_end && positions!(g, [positions(g); zeros(Float64, f, 3)])
+    to_end || positions!(g, [zeros(Float64, f, 3); positions(g)])
 
     for v in vertices(g)
+
         if outneighbors(g, v) != []
-            rotations!(g, v, [rotations(g, v); zeros(Float64, frames, 3)])
+            to_end && rotations!(g, v, [rotations(g, v); zeros(Float64, f, 3)])
+            to_end || rotations!(g, v, [zeros(Float64, f, 3); rotations(g, v)])
         end
+
     end
 
-    nframes!(g, nframes(g) + frames)
+    frames!(g, frames(g) + f)
     return g
 end
 
-add_frames!(frames::Integer) = g -> add_frames!(g, frames)
+add_frames!(f::Integer, to_end::Bool = true) = g -> add_frames!(g, f, to_end)
 
 
 """
@@ -36,10 +41,10 @@ Add a vertex on the straight line between `v₋₁` and `v₊₁` named `name`.
 `v₋₁` and `v₊₁` can also be identified by their name.
 """
 function add_joint!(g::BVHGraph, v₋₁::Integer, v₊₁::Integer, name::AbstractString; fraction::Float64 = 0.5)
-    v = add_vertex!(g, name = "JOINT $(name)", sequence = sequence(g, v₋₁), rotations = zeros(Float64, nframes(g), 3))
-    off = offset(g, v₋₁, v₊₁)
-    add_edge!(g, v₋₁, v, offset = fraction * off)
-    add_edge!(g, v, v₊₁, offset = (1 - fraction) * off)
+    v = add_vertex!(g, name = "JOINT $(name)", sequence = sequence(g, v₋₁), rotations = zeros(Float64, frames(g), 3))
+    o = offset(g, v₋₁, v₊₁)
+    add_edge!(g, v₋₁, v, offset = fraction * o)
+    add_edge!(g, v, v₊₁, offset = (1 - fraction) * o)
     rem_edge!(g, v₋₁, v₊₁)
     return g
 end
@@ -57,23 +62,25 @@ The outneighbors of `v₋₁` that should be attached as outneighbors to the new
 "JOINT" is automatically added in front of `name`. 
 `v₋₁` can also be identified by its name.
 """
-function add_joint!(g::BVHGraph, v₋₁::Integer, name::AbstractString, off::Vector{Float64}, nb::Vector = outneighbors(g, v₋₁))
-    v = add_vertex!(g, name = "JOINT $(name)", sequence = sequence(g, v₋₁), rotations = zeros(Float64, nframes(g), 3))
+function add_joint!(g::BVHGraph, v₋₁::Integer, name::AbstractString, o::Vector{Float64}, nb::Vector = outneighbors(g, v₋₁))
+    v = add_vertex!(g, name = "JOINT $(name)", sequence = sequence(g, v₋₁), rotations = zeros(Float64, frames(g), 3))
 
     for n in nb
+
         if n in outneighbors(g, v₋₁)
-            add_edge!(g, v, n, offset = offset(g, v₋₁, n) - off)
+            add_edge!(g, v, n, offset = offset(g, v₋₁, n) - o)
             rem_edge!(g, v₋₁, n)
         end
+
     end
 
-    add_edge!(g, v₋₁, v, offset = off)
+    add_edge!(g, v₋₁, v, offset = o)
     return g
 end
 
-add_joint!(v₋₁::Integer, name::AbstractString, off::Vector{Float64}, nb::Vector = outneighbors(g, v₋₁)) = g -> add_joint!(g, v₋₁, name, off, nb)
-add_joint!(v₋₁::AbstractString, name::AbstractString, off::Vector{Float64}) = g -> add_joint!(g, find(g, v₋₁), name, off)
-add_joint!(g::BVHGraph, v₋₁::AbstractString, name::AbstractString, off::Vector{Float64}, nb::Vector = outneighbors(g, find(g, v₋₁))) = add_joint!(g, find(g, v₋₁), name, off, nb)
+add_joint!(v₋₁::Integer, name::AbstractString, o::Vector{Float64}, nb::Vector = outneighbors(g, v₋₁)) = g -> add_joint!(g, v₋₁, name, o, nb)
+add_joint!(v₋₁::AbstractString, name::AbstractString, o::Vector{Float64}) = g -> add_joint!(g, find(g, v₋₁), name, o)
+add_joint!(g::BVHGraph, v₋₁::AbstractString, name::AbstractString, o::Vector{Float64}, nb::Vector = outneighbors(g, find(g, v₋₁))) = add_joint!(g, find(g, v₋₁), name, o, nb)
 
 
 """
@@ -89,7 +96,7 @@ See also: [`change_sequences!`](@ref)
 function change_sequence!(g::BVHGraph, v::Integer, sym::Symbol)
     r = constructor(sym)
     
-    for f in frames(g)
+    for f in 1:frames(g)
         R = rotation(g, v, f) |> r
         rotations(g, v)[f, :] = degrees(R)
     end
@@ -129,8 +136,8 @@ Add a number of `h` frames between each pair of consecutive frames by interpolat
 them using LERP.
 """
 function interpolate!(g::BVHGraph, h::Integer = 1)
-    frames = nframes(g)
-    nframes!(g, (h + 1) * frames - h)
+    n = frames(g)
+    frames!(g, (h + 1) * n - h)
     frametime!(g, frametime(g) / (h + 1))
     fraction = 1 / (h + 1)
 
@@ -139,10 +146,10 @@ function interpolate!(g::BVHGraph, h::Integer = 1)
         if outneighbors(g, v) != []
             sym = sequence(g, v)
             constr = constructor(sym)
-            M = zeros(Float64, (h + 1) * frames - h, 3)
+            M = zeros(Float64, (h + 1) * n - h, 3)
             M[1, :] = rotations(g, v, 1)
 
-            for f in 1:frames - 1
+            for f in 1:n - 1
                 q₀ = UnitQuaternion(rotation(g, v, sym, f))
                 R₁ = rotation(g, v, sym, f + 1)
                 q₁ = UnitQuaternion(R₁)
@@ -159,10 +166,10 @@ function interpolate!(g::BVHGraph, h::Integer = 1)
         end
     end
 
-    P = zeros(Float64, (h + 1) * frames - h, 3)
+    P = zeros(Float64, (h + 1) * n - h, 3)
     P[1, :] = positions(g)[1, :]
 
-    for f in 1:frames - 1
+    for f in 1:n - 1
         p₀ = positions(g)[f, :]
         p₁ = positions(g)[f + 1, :]
 
@@ -195,15 +202,15 @@ function project!(g::BVHGraph, h::BVHGraph, T::Matrix = Matrix(1.0I, 3, 3))
         if outneighbors(h, hv) != []
             gv = find(g, name(h, hv))
 
-            for f in frames(h)
+            for f in 1:frames(h)
                 R = rotation(h, hv, f)
                 rotation!(g, gv, f, T * R * inv(T))
             end
         end
     end
 
-    for f in frames(h)
-        position!(g, f, T * positions(h)[f, :])
+    for f in 1:frames(h)
+        positions(g)[f, :] = T * positions(h)[f, :]
     end
 
     frametime!(g, frametime(h))
@@ -211,6 +218,34 @@ function project!(g::BVHGraph, h::BVHGraph, T::Matrix = Matrix(1.0I, 3, 3))
 end
 
 project!(x...) = g -> project!(g, x...)
+
+
+"""
+    remove_frames!(g::BVHGraph, frames::Integer, from_end::Bool = true)
+
+Shorten the animation by a number of `frames`.
+
+By default the frames are removed from the end.
+"""
+function remove_frames!(g::BVHGraph, f::Integer, from_end::Bool = true)
+    n = frames(g)
+    from_end && positions!(g, positions(g)[1:n-f, :])
+    from_end || positions!(g, positions(g)[1+f:n, :])
+
+    for v in vertices(g)
+        
+        if outneighbors(g, v) != []
+            from_end && rotations!(g, v, rotations(g, v)[1:n-f, :])
+            from_end || rotations!(g, v, rotations(g, v)[1+f:n, :])
+        end
+
+    end
+
+    frames!(g, n - f)
+    return g
+end
+
+remove_frames!(f::Integer, from_end::Bool = true) = g -> remove_frames!(g, f, from_end)
 
 
 """
@@ -233,7 +268,7 @@ function remove_joint!(g::BVHGraph, v::Integer, v₊₁::Integer = outneighbors(
         oᵥ₊₁ = offset(g, v, v₊₁)
         o = oᵥ + oᵥ₊₁
 
-        for f in frames(g)
+        for f in 1:frames(g)
             Rᵥ = rotation(g, v, f)
             Rᵥ₋₁ = rotation(g, v₋₁, f)
             B = rotation_between(o, inv(Rᵥ) * oᵥ + oᵥ₊₁)
@@ -244,6 +279,7 @@ function remove_joint!(g::BVHGraph, v::Integer, v₊₁::Integer = outneighbors(
                 if outneighbors(g, n) != []
                     rotation!(g, n, f, inv(B) * rotation(g, n, f))
                 end
+
             end
 
             for n in outneighbors(g, v₋₁)
@@ -251,6 +287,7 @@ function remove_joint!(g::BVHGraph, v::Integer, v₊₁::Integer = outneighbors(
                 if outneighbors(g, n) != []
                     rotation!(g, n, f, inv(B) * inv(Rᵥ) * rotation(g, n, f))
                 end
+
             end
         end
 
@@ -321,15 +358,15 @@ function replace_offset!(g::BVHGraph, h::BVHGraph, gv₊₁::Integer, T::Matrix{
     gv = inneighbors(g, gv₊₁)[1]
     hv = find(h, name(g, gv))
     hv₊₁ = find_outneighbor(h, hv, name(g, gv₊₁))
-    goffᵥ₊₁ = offset(g, gv, gv₊₁)
-    hoffᵥ₊₁ = T * offset(h, hv, hv₊₁)
-    scale = norm(goffᵥ₊₁) / norm(hoffᵥ₊₁)
-    offset!(g, gv, gv₊₁, scale * hoffᵥ₊₁)
+    goᵥ₊₁ = offset(g, gv, gv₊₁)
+    hoᵥ₊₁ = T * offset(h, hv, hv₊₁)
+    scale = norm(goᵥ₊₁) / norm(hoᵥ₊₁)
+    offset!(g, gv, gv₊₁, scale * hoᵥ₊₁)
 
     if change_rotation
-        B = rotation_between(hoffᵥ₊₁, goffᵥ₊₁)
+        B = rotation_between(hoᵥ₊₁, goᵥ₊₁)
 
-        for f in frames(g)
+        for f in 1:frames(g)
             Rᵥ = rotation(g, gv, f)
             rotation!(g, gv, f, Rᵥ * B)
         
@@ -339,6 +376,7 @@ function replace_offset!(g::BVHGraph, h::BVHGraph, gv₊₁::Integer, T::Matrix{
                     Rᵥ₊₁ = rotation(g, n, f)
                     rotation!(g, n, f, inv(B) * Rᵥ₊₁)
                 end
+
             end
         end
     end
@@ -399,11 +437,11 @@ scale!(scale::Float64) = g -> scale!(g, scale)
 Change all rotations as well as the positions of ROOT to zero.
 """
 function zero!(g::BVHGraph)
-    frames = nframes(g)
-    positions!(g, zeros(Float64, frames, 3))
+    f = frames(g)
+    positions!(g, zeros(Float64, f, 3))
 
     for v in vertices(g)
-        neighbors(g, v) != [] && rotations!(g, v, zeros(Float64, frames, 3))
+        outneighbors(g, v) != [] && rotations!(g, v, zeros(Float64, f, 3))
     end
 
     return g

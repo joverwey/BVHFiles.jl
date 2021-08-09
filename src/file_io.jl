@@ -19,10 +19,10 @@ function load(filename::AbstractString)
     list = read(filename, String) |> split((' ', '\t', '\n', '\r'))
     g = BVHGraph(1, name = filename, 
                     offset = [parse(Float64, e) for e in list[6:8]],
-                    sequence = short(list[11:13]))
+                    sequence = shorten(list[11:13]))
 
     name!(g, 1, "ROOT" * ' ' * list[3])
-    sequence!(g, 1, short(list[14:16]))
+    sequence!(g, 1, shorten(list[14:16]))
     i = 17
 
     function add_joint(v₋₁::Integer)
@@ -31,7 +31,7 @@ function load(filename::AbstractString)
             add_edge!(g, v₋₁, v, offset = [parse(Float64, e) for e in list[i + 4:i + 6]])
         
             if list[i] == "JOINT"
-                sequence!(g, v, short(list[i + 9:i + 11]))
+                sequence!(g, v, shorten(list[i + 9:i + 11]))
                 i += 12
                 add_joint(v)
                 i += 1
@@ -45,7 +45,7 @@ function load(filename::AbstractString)
 
     add_joint(1)
     frames = parse(Int64, list[i + 3])
-    nframes!(g, frames)
+    frames!(g, frames)
     frametime!(g, parse(Float64, list[i + 6]))
     positions!(g, zeros(Float64, frames, 3))
 
@@ -91,7 +91,7 @@ function save(g::BVHGraph, filename::AbstractString)
         println(io, '\t'^(tabs + 1), "OFFSET", ['\t' * string(e) for e in offset(g, v₋₁, v)]...)
 
         if outneighbors(g, v) != []
-            println(io, '\t'^(tabs + 1), "CHANNELS 3 ", sequence(g, v) |> long)
+            println(io, '\t'^(tabs + 1), "CHANNELS 3 ", sequence(g, v) |> extend_rotation)
 
             for n in outneighbors(g, v)
                 add_hierarchy(io, v, n, tabs + 1)
@@ -114,7 +114,7 @@ function save(g::BVHGraph, filename::AbstractString)
         println(io, name(g, 1))
         println(io, "{")
         println(io, "\tOFFSET", ['\t' * string(e) for e in offset(g)]...)
-        println(io, "\tCHANNELS 6 ", sequence(g) |> long_position, " ", sequence(g, 1) |> long)
+        println(io, "\tCHANNELS 6 ", sequence(g) |> extend_position, " ", sequence(g, 1) |> extend_rotation)
 
         for n in outneighbors(g, 1)
             add_hierarchy(io, 1, n, 1)
@@ -122,10 +122,10 @@ function save(g::BVHGraph, filename::AbstractString)
 
         println(io, "}")
         println(io, "MOTION")
-        println(io, "Frames: ", nframes(g))
+        println(io, "Frames: ", frames(g))
         println(io, "Frame Time: ", frametime(g))
 
-        for f in frames(g)
+        for f in 1:frames(g)
             pos = positions(g)[f, :]
             print(io, pos[1], "\t", pos[2], "\t", pos[3])
             print(io, ['\t' * string(e) for e in rotations(g, 1, f)]...)

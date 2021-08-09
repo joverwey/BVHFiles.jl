@@ -1,7 +1,7 @@
 name = "BVHFiles"
 uuid = "25714dd2-c69e-4994-8c66-7895118b2050"
 authors = ["Carl Bittendorf"]
-version = "0.2.1"
+version = "0.3.1"
 
 [deps]
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"

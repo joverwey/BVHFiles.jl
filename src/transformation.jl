@@ -150,9 +150,9 @@ function interpolate!(g::BVHGraph, h::Integer = 1)
             M[1, :] = rotations(g, v, 1)
 
             for f in 1:n - 1
-                q₀ = UnitQuaternion(rotation(g, v, sym, f))
+                q₀ = QuatRotation(rotation(g, v, sym, f))
                 R₁ = rotation(g, v, sym, f + 1)
-                q₁ = UnitQuaternion(R₁)
+                q₁ = QuatRotation(R₁)
 
                 for i in 1:h
                     R = q₀ * (1 - (fraction * i)) + q₁ * (fraction * i)

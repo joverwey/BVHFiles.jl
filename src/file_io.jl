@@ -17,9 +17,9 @@ Name: Test.bvh
 """
 function load(filename::AbstractString)
     list = read(filename, String) |> split((' ', '\t', '\n', '\r'))
-    g = BVHGraph(1, name = filename, 
-                    offset = [parse(Float64, e) for e in list[6:8]],
-                    sequence = shorten(list[11:13]))
+    g = BVHGraph(1, name=filename,
+        offset=[parse(Float64, e) for e in list[6:8]],
+        sequence=shorten(list[11:13]))
 
     name!(g, 1, "ROOT" * ' ' * list[3])
     sequence!(g, 1, shorten(list[14:16]))
@@ -27,26 +27,27 @@ function load(filename::AbstractString)
 
     function add_joint(v₋₁::Integer)
         while true
-            v = add_vertex!(g, name = list[i] * ' ' * list[i + 1])
-            add_edge!(g, v₋₁, v, offset = [parse(Float64, e) for e in list[i + 4:i + 6]])
-        
+            v = add_vertex!(g, name=list[i] * ' ' * list[i+1])
+            add_edge!(g, v₋₁, v, offset=[parse(Float64, e) for e in list[i+4:i+6]])
+
             if list[i] == "JOINT"
-                sequence!(g, v, shorten(list[i + 9:i + 11]))
+                sequence!(g, v, shorten(list[i+9:i+11]))
                 i += 12
                 add_joint(v)
                 i += 1
             else
                 i += 8
             end
-        
-            list[i] != "JOINT" && list[i] != "End" && break
+
+            # Note that the End Site is optional
+            list[i] != "JOINT" && list[i] != "End" && list[i] != "}" && break
         end
     end
 
     add_joint(1)
-    frames = parse(Int64, list[i + 3])
+    frames = parse(Int64, list[i+3])
     frames!(g, frames)
-    frametime!(g, parse(Float64, list[i + 6]))
+    frametime!(g, parse(Float64, list[i+6]))
     positions!(g, zeros(Float64, frames, 3))
 
     for v in vertices(g)
@@ -56,17 +57,17 @@ function load(filename::AbstractString)
     i += 7
 
     function add_frame(v::Integer, f::Integer)
-        rotations(g, v)[f, :] = [parse(Float64, e) for e in list[i:i + 2]]
+        rotations(g, v)[f, :] = [parse(Float64, e) for e in list[i:i+2]]
         i += 3
-        
+
         for n in outneighbors(g, v)
             outneighbors(g, n) != [] && add_frame(n, f)
         end
     end
 
     for f in 1:frames
-        positions(g)[f, :] = [parse(Float64, e) for e in list[i:i + 2]]
-        rotations(g, 1)[f, :] = [parse(Float64, e) for e in list[i + 3:i + 5]]
+        positions(g)[f, :] = [parse(Float64, e) for e in list[i:i+2]]
+        rotations(g, 1)[f, :] = [parse(Float64, e) for e in list[i+3:i+5]]
         i += 6
 
         for n in outneighbors(g, 1)
